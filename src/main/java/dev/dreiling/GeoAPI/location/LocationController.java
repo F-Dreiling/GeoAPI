@@ -33,8 +33,8 @@ public class LocationController {
     }
 
     @GetMapping("/near")
-    public List<Location> findNearby(@RequestParam double lng, @RequestParam double lat, @RequestParam(defaultValue = "5") double km) {
-        GeoJsonPoint point = new GeoJsonPoint(lng, lat);
+    public List<Location> findNearby(@RequestParam double lon, @RequestParam double lat, @RequestParam(defaultValue = "5") double km) {
+        GeoJsonPoint point = new GeoJsonPoint(lon, lat);
         Distance distance = new Distance(km, Metrics.KILOMETERS);
 
         return repository.findByGeoPointNear(point, distance);
