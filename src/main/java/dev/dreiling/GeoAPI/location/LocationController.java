@@ -28,8 +28,8 @@ public class LocationController {
     }
 
     @GetMapping("/search")
-    public List<Location> findByName(@RequestParam String name) {
-        return repository.findByName(name);
+    public List<Location> search(@RequestParam String term) {
+        return repository.search(term);
     }
 
     @GetMapping("/near")
