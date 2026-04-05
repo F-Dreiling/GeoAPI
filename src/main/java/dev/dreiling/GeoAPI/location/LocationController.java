@@ -6,6 +6,8 @@ import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
 
 import java.util.List;
+import java.util.Calendar;
+import java.util.Date;
 
 @RestController
 @RequestMapping("/locations")
@@ -30,6 +32,21 @@ public class LocationController {
     @GetMapping("/search")
     public List<Location> search(@RequestParam String term) {
         return repository.search(term);
+    }
+
+    @GetMapping("/date")
+    public List<Location> date(@RequestParam int year) {
+        Calendar cal = Calendar.getInstance();
+
+        cal.set(year, Calendar.JANUARY, 1, 0, 0, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        Date start = cal.getTime();
+
+        cal.set(year, Calendar.DECEMBER, 31, 23, 59, 59);
+        cal.set(Calendar.MILLISECOND, 999);
+        Date end = cal.getTime();
+
+        return repository.findByYear(start, end);
     }
 
     @GetMapping("/near")
