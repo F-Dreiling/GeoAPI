@@ -25,8 +25,8 @@ public class LocationController {
     }
 
     @GetMapping("/{id}")
-    public Location getById(@PathVariable String id) {
-        return repository.findById(id).orElseThrow();
+    public List<Location> getById(@PathVariable String id) {
+        return repository.findById(id).map(List::of).orElse(List.of());
     }
 
     @GetMapping("/search")
