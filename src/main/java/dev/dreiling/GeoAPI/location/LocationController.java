@@ -4,10 +4,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
-import java.util.Calendar;
-import java.util.Date;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/locations")
@@ -36,15 +36,8 @@ public class LocationController {
 
     @GetMapping("/date")
     public List<Location> date(@RequestParam int year) {
-        Calendar cal = Calendar.getInstance();
-
-        cal.set(year, Calendar.JANUARY, 1, 0, 0, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        Date start = cal.getTime();
-
-        cal.set(year, Calendar.DECEMBER, 31, 23, 59, 59);
-        cal.set(Calendar.MILLISECOND, 999);
-        Date end = cal.getTime();
+        LocalDate start = LocalDate.of(year, 1, 1);
+        LocalDate end = start.plusYears(1);
 
         return repository.findByYear(start, end);
     }
@@ -60,5 +53,15 @@ public class LocationController {
     @PostMapping
     public Location create(@RequestBody Location location) {
         return repository.save(location);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable String id) {
+        if (!repository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        repository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }
