@@ -15,7 +15,7 @@ public class LocationController {
 
     private final LocationRepository repository;
 
-    public LocationController(LocationRepository repository) {
+    public LocationController( LocationRepository repository ) {
         this.repository = repository;
     }
 
@@ -25,17 +25,17 @@ public class LocationController {
     }
 
     @GetMapping("/{id}")
-    public List<Location> getById(@PathVariable String id) {
+    public List<Location> getById( @PathVariable String id ) {
         return repository.findById(id).map(List::of).orElse(List.of());
     }
 
     @GetMapping("/search")
-    public List<Location> search(@RequestParam String term) {
+    public List<Location> search( @RequestParam String term ) {
         return repository.search(term);
     }
 
     @GetMapping("/date")
-    public List<Location> date(@RequestParam int year) {
+    public List<Location> date( @RequestParam int year ) {
         LocalDate start = LocalDate.of(year, 1, 1);
         LocalDate end = start.plusYears(1);
 
@@ -43,7 +43,7 @@ public class LocationController {
     }
 
     @GetMapping("/near")
-    public List<Location> findNearby(@RequestParam double lon, @RequestParam double lat, @RequestParam(defaultValue = "5") double km) {
+    public List<Location> findNearby( @RequestParam double lon, @RequestParam double lat, @RequestParam(defaultValue = "5") double km ) {
         GeoJsonPoint point = new GeoJsonPoint(lon, lat);
         Distance distance = new Distance(km, Metrics.KILOMETERS);
 
@@ -51,12 +51,12 @@ public class LocationController {
     }
 
     @PostMapping
-    public Location create(@RequestBody Location location) {
+    public Location create( @RequestBody Location location ) {
         return repository.save(location);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
+    public ResponseEntity<Void> delete( @PathVariable String id ) {
         if (!repository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
