@@ -7,18 +7,25 @@ import org.springframework.data.geo.Distance;
 
 import java.util.List;
 import java.time.LocalDate;
+import java.util.Optional;
 
 public interface LocationRepository extends MongoRepository<Location, String> {
 
-    @Query("{ $or: [ " +
-            "{ 'name': { $regex: ?0, $options: 'i' } }, " +
-            "{ 'address': { $regex: ?0, $options: 'i' } } " +
-            "] }")
-    List<Location> search( String term );
+    List<Location> findByUserId( String userId );
 
-    @Query("{ 'dateVisited': { $gte: ?0, $lt: ?1 } }")
-    List<Location> findByYear( LocalDate start, LocalDate end );
+    Optional<Location> findByIdAndUserId( String id, String userId );
+
+    @Query( "{ 'userId': ?1, $or: [ " +
+                "{ 'name': { $regex: ?0, $options: 'i' } }, " +
+                "{ 'address': { $regex: ?0, $options: 'i' } } " +
+            "] }" )
+    List<Location> findByTermAndUserId( String term, String userId );
+
+    @Query( "{ 'userId': ?2, 'dateVisited': { $gte: ?0, $lt: ?1 } }" )
+    List<Location> findByYearAndUserId( LocalDate start, LocalDate end, String userId );
 
     List<Location> findByGeoPointNear( GeoJsonPoint point, Distance distance );
+
+    boolean existsByIdAndUserId( String id, String userId );
 
 }

@@ -14,7 +14,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
-public class ApiKeyFilter extends OncePerRequestFilter {
+public class HeaderFilter extends OncePerRequestFilter {
 
     @Value("${app.api.key}")
     private String apiKey;
@@ -29,12 +29,13 @@ public class ApiKeyFilter extends OncePerRequestFilter {
             return;
         }
 
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken( "php-client", null, List.of() );
+        String userId = request.getHeader("X-USER-ID");
+        String principal = ( userId != null && !userId.isBlank() ) ? userId : "geo-tourist";
 
-        authentication.setDetails( new WebAuthenticationDetailsSource().buildDetails(request) );
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken( principal, null, List.of() );
+        auth.setDetails( new WebAuthenticationDetailsSource().buildDetails(request) );
+        SecurityContextHolder.getContext().setAuthentication( auth );
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        filterChain.doFilter(request, response);
+        filterChain.doFilter( request, response );
     }
 }

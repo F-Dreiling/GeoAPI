@@ -16,6 +16,8 @@ public class Location {
     @Id
     private String id;
 
+    private String userId;
+
     private String name;
     private String address;
 
