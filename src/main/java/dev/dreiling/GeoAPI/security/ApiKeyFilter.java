@@ -21,13 +21,6 @@ public class ApiKeyFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal( HttpServletRequest request, @Nonnull HttpServletResponse response, @Nonnull FilterChain filterChain ) throws ServletException, IOException {
-        String path = request.getRequestURI();
-
-        if ( path.startsWith("/auth") ) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         String headerKey = request.getHeader("X-API-KEY");
 
         if ( !apiKey.equals(headerKey) ) {
