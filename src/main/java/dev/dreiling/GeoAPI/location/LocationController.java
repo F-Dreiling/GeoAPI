@@ -1,10 +1,16 @@
 package dev.dreiling.GeoAPI.location;
 
+import dev.dreiling.GeoAPI.image.ImageService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.time.LocalDate;
 
@@ -14,10 +20,12 @@ public class LocationController {
 
     private final LocationRepository repository;
     private final LocationService service;
+    private final ImageService imageService;
 
-    public LocationController( LocationRepository repository, LocationService service ) {
+    public LocationController( LocationRepository repository, LocationService service, ImageService imageService ) {
         this.repository = repository;
         this.service = service;
+        this.imageService = imageService;
     }
 
     private String getUserId( Authentication auth ) {
@@ -34,21 +42,27 @@ public class LocationController {
     public List<Location> getAll( Authentication auth ) {
         String userId = getUserId(auth);
 
-        return repository.findByUserId(userId);
+        List<Location> locations = repository.findByUserId(userId);
+
+        return locations;
     }
 
     @GetMapping("/{id}")
     public List<Location> getById( @PathVariable String id, Authentication auth ) {
         String userId = getUserId(auth);
 
-        return repository.findByIdAndUserId( id, userId ).map(List::of).orElse(List.of());
+        List<Location> locations = repository.findByIdAndUserId( id, userId ).map(List::of).orElse(List.of());
+
+        return locations;
     }
 
     @GetMapping("/search")
     public List<Location> search( @RequestParam String term, Authentication auth ) {
         String userId = getUserId(auth);
 
-        return repository.findByTermAndUserId( term, userId );
+        List<Location> locations = repository.findByTermAndUserId( term, userId );
+
+        return locations;
     }
 
     @GetMapping("/date")
@@ -58,7 +72,9 @@ public class LocationController {
         LocalDate start = LocalDate.of(year, 1, 1);
         LocalDate end = start.plusYears(1);
 
-        return repository.findByYearAndUserId( start, end, userId );
+        List<Location> locations = repository.findByYearAndUserId( start, end, userId );
+
+        return locations;
     }
 
     @GetMapping("/near")
@@ -68,16 +84,49 @@ public class LocationController {
         GeoJsonPoint point = new GeoJsonPoint( lon, lat );
         //Distance distance = new Distance( km, Metrics.KILOMETERS );
 
-        return service.findNearby( userId, point, km );
+        List<Location> locations = service.findNearby( userId, point, km );
+
+        return locations;
+    }
+
+    @GetMapping("/images/{filename}")
+    public ResponseEntity<byte[]> getImage( @PathVariable String filename, Authentication auth ) throws IOException {
+        String userId = getUserId(auth);
+
+        boolean exists = repository.findByUserId(userId).stream().anyMatch( loc -> loc.getImageUrl() != null && loc.getImageUrl().endsWith(filename) );
+        if (!exists) return ResponseEntity.status(403).build();
+
+        Path path = Paths.get("uploads").resolve(filename);
+        if ( !Files.exists(path) ) return ResponseEntity.notFound().build();
+
+        byte[] image = Files.readAllBytes(path);
+
+        return ResponseEntity.ok().header( "Content-Type", Files.probeContentType(path) ).body(image);
     }
 
     @PostMapping
-    public Location create( @RequestBody Location location, Authentication auth ) {
+    public List<Location> create( @RequestBody Location location, Authentication auth ) {
         String userId = getUserId(auth);
 
         location.setUserId(userId);
 
-        return repository.save( location );
+        location = repository.save( location );
+
+        return List.of(location);
+    }
+
+    @PostMapping("/{id}/image")
+    public ResponseEntity<Location> uploadImage( @PathVariable String id, @RequestParam("file") MultipartFile file, Authentication auth ) throws IOException {
+        String userId = getUserId(auth);
+
+        Location location = repository.findByIdAndUserId( id, userId ).orElseThrow( () -> new RuntimeException( "Location not found" ) );
+
+        String filename = imageService.saveImage(file);
+        location.setImageUrl( filename );
+
+        repository.save( location );
+
+        return ResponseEntity.ok( location );
     }
 
     @DeleteMapping("/{id}")
