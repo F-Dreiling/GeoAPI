@@ -6,6 +6,8 @@ import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.multipart.MultipartFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,6 +23,7 @@ public class LocationController {
     private final LocationRepository repository;
     private final LocationService service;
     private final ImageService imageService;
+    private static final Logger log = LoggerFactory.getLogger(LocationController.class);
 
     public LocationController( LocationRepository repository, LocationService service, ImageService imageService ) {
         this.repository = repository;
@@ -112,21 +115,31 @@ public class LocationController {
 
         location = repository.save( location );
 
-        return List.of(location);
+        return List.of( location );
     }
 
     @PostMapping("/{id}/image")
-    public ResponseEntity<Location> uploadImage( @PathVariable String id, @RequestParam("file") MultipartFile file, Authentication auth ) throws IOException {
+    public ResponseEntity<UploadResponse> uploadImage( @PathVariable String id, @RequestParam("file") MultipartFile file, Authentication auth ) throws IOException {
         String userId = getUserId(auth);
 
         Location location = repository.findByIdAndUserId( id, userId ).orElseThrow( () -> new RuntimeException( "Location not found" ) );
 
-        String filename = imageService.saveImage(file);
-        location.setImageUrl( filename );
+        String status = "success";
+        String message = "Success";
 
-        repository.save( location );
+        try {
+            String filename = imageService.saveImage(file);
+            location.setImageUrl(filename);
 
-        return ResponseEntity.ok( location );
+            repository.save(location);
+        }
+        catch ( Exception e ) {
+            status = "error";
+            message = "Image upload rejected: " + e.getMessage();
+            log.warn( message );
+        }
+
+        return ResponseEntity.ok( new UploadResponse( location, status, message ) );
     }
 
     @DeleteMapping("/{id}")
