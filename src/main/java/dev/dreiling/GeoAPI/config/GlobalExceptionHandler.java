@@ -14,7 +14,7 @@ public class GlobalExceptionHandler {
         UploadResponse response = new UploadResponse(
                 null,
                 "error",
-                "Image too large (max 2MB allowed)"
+                "Image upload rejected: Image too large (max 2MB)"
         );
 
         return ResponseEntity.ok( response );

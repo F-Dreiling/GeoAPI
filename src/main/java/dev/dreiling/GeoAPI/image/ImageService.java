@@ -34,13 +34,11 @@ public class ImageService {
         }
 
         String extension = getExtension( file.getOriginalFilename() ).toLowerCase();
-
         if ( !ALLOWED_FORMATS.contains(extension) ) {
             throw new IOException( "Unsupported format" );
         }
 
         String outputFormat = ( extension.equals("png") || extension.equals("gif") ) ? "png" : "jpg";
-
         String filename = UUID.randomUUID() + "." + outputFormat;
 
         Path path = Paths.get( uploadDir, filename );
